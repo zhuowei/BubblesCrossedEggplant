@@ -46,11 +46,45 @@ def display(env, arg)
 	p val
 end
 
+def if(env, arg)
+	cond = eval(env, arg.car)
+	arg = arg.cdr
+	first = arg.car
+	arg = arg.cdr
+	second = nil
+	if arg != nil
+		second = arg.car
+	end
+	if cond
+		if first != nil
+			return eval(env, first)
+		end
+	else
+		if second != nil
+			return eval(env, second)
+		end
+	end
+	return nil
+end
+
+def eq(env, arg)
+	first = eval(env, arg.car)
+	args_iter(env, arg.cdr) { |val|
+		if val != first
+			return false
+		end
+	}
+	return true
+end
+
 def init_env(env)
 	myenv = {"+" => method(:add), "-" => method(:sub), "*" => method(:mul), "/" => method(:div), "define" => method(:define),
 		"quote" => method(:quote),
 		"lambda" => method(:lamb),
 		"display" => method(:display),
+		"if" => method(:if),
+		"eq?" => method(:eq),
+		"nil" => nil,
 	}
 	env.merge! myenv
 end

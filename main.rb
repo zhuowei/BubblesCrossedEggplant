@@ -84,9 +84,6 @@ def parse_impl(lexer)
 			c = append(c, inside)
 		end
 		#p "retval: " + tree.to_s
-		if tree.car == nil
-			return nil
-		end
 		return tree
 	when :NUMBER
 		return tok[1]
@@ -110,6 +107,9 @@ def eval(env, exp)
 	elsif exp.is_a? Sym
 		return env[exp.name]
 	elsif exp.is_a? Node
+		if exp.car == nil
+			return exp
+		end
 		method = eval(env, exp.car)
 		if method.is_a? Method or method.is_a? Lamb
 			return method.call(env, exp.cdr)
@@ -147,11 +147,22 @@ end
 input = gets.strip
 if input.length < 1
 	#input = "(define x 5)(define y 7)(+ x (- y 1))"
-	input = "(define bzzt (lambda (x) (display x) (bzzt (+ x 1))))(bzzt 0)"
+	input =
+"""
+(define bzzt
+	(lambda (x)
+		(display x)
+		(if	(eq? x 300)
+			()
+			(bzzt (+ x 1))
+		)
+	)
+)
+(bzzt 0)"
 end
 
 trees = parse(input)
-#p trees
+p trees
 
 #p "eval"
 

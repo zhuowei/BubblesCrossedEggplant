@@ -71,8 +71,11 @@ class Lex
       when (text = @ss.scan(/[+\-]?[0-9]+/))
          action { [:NUMBER, text.to_i] }
 
-      when (text = @ss.scan(/[a-zA-Z+\-\*\/_][a-zA-Z0-9+\-\*\/_]*/))
+      when (text = @ss.scan(/[a-zA-Z+\-\*\/\?_][a-zA-Z0-9+\-\*\/\?_]*/))
          action { [:SYMBOL, text] }
+
+      when (text = @ss.scan(/./))
+         action { p "FAIL!" }
 
       else
         text = @ss.string[@ss.pos .. -1]

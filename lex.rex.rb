@@ -65,6 +65,9 @@ class Lex
       when (text = @ss.scan(/\)/))
          action { [:CLOSE_PAREN, nil] }
 
+      when (text = @ss.scan(/\'/))
+         action { [:QUOTE, nil] }
+
       when (text = @ss.scan(/[+\-]?[0-9]+/))
          action { [:NUMBER, text.to_i] }
 

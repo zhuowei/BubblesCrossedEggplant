@@ -1,4 +1,5 @@
 require_relative "lex.rex"
+require_relative "stdlib"
 
 class Sym
 	attr_accessor :name
@@ -20,6 +21,24 @@ class Node
 		end
 		s += ")"
 		return s
+	end
+end
+
+class Lamb
+	attr_accessor :arg_names
+	attr_accessor :code
+	attr_accessor :scope # TODO
+	def call(env, args)
+		newenv = env.clone # TODO
+		lamb_args_iter(env, args, arg_names) { |arg, name|
+			newenv[name.name] = arg
+		}
+		# todo args
+		retval = nil
+		args_iter(newenv, code) { |arg|
+			retval = arg
+		}
+		return retval
 	end
 end
 
@@ -75,6 +94,13 @@ def parse_impl(lexer)
 		sym = Sym.new
 		sym.name = tok[1]
 		return sym
+	when :QUOTE
+		subtree = parse_impl(lexer)
+		node = Node.new
+		node.car = Sym.new
+		node.car.name = "quote"
+		append(node, subtree)
+		return node
 	end
 end
 
@@ -85,7 +111,7 @@ def eval(env, exp)
 		return env[exp.name]
 	elsif exp.is_a? Node
 		method = eval(env, exp.car)
-		if method.is_a? Method
+		if method.is_a? Method or method.is_a? Lamb
 			return method.call(env, exp.cdr)
 		else
 			p "todo"
@@ -103,37 +129,14 @@ def args_iter(env, node)
 	end
 end
 
-def add(env, arg)
-	ret = 0
-	args_iter(env, arg) { |val|
-		ret += val
-	}
-	return ret
+def lamb_args_iter(env, node, node2)
+	while node != nil and node2 != nil
+		yield eval(env, node.car), node2.car
+		node = node.cdr
+		node2 = node2.cdr
+	end
 end
 
-def sub(env, arg)
-	ret = eval(env, arg.car)
-	args_iter(env, arg.cdr) { |val|
-		ret -= val
-	}
-	return ret
-end
-
-def mul(env, arg)
-	ret = 1
-	args_iter(env, arg) { |val|
-		ret *= val
-	}
-	return ret
-end
-
-def div(env, arg)
-	ret = eval(env, arg.car)
-	args_iter(env, arg.cdr) { |val|
-		ret /= val
-	}
-	return ret
-end
 
 def define(env, arg)
 	name = arg.car.name
@@ -143,7 +146,8 @@ end
 
 input = gets.strip
 if input.length < 1
-	input = "(define x 5)(define y 7)(+ x (- y 1))"
+	#input = "(define x 5)(define y 7)(+ x (- y 1))"
+	input = "(define bzzt (lambda (x) (display x) (bzzt (+ x 1))))(bzzt 0)"
 end
 
 trees = parse(input)
@@ -151,7 +155,8 @@ trees = parse(input)
 
 #p "eval"
 
-myenv = {"+" => method(:add), "-" => method(:sub), "*" => method(:mul), "/" => method(:div), "define" => method(:define)}
+myenv = {}
+init_env(myenv)
 trees.each { |tree|
 	p eval(myenv, tree)
 }

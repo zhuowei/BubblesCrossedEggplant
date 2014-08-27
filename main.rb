@@ -98,6 +98,13 @@ def parse_impl(lexer)
 		node.car.name = "quote"
 		append(node, subtree)
 		return node
+	when :STRING_LITERAL
+		return tok[1]
+	when :BOOLEAN_LITERAL
+		return tok[1]
+	else
+		p "Unknown token " + tok
+		return nil
 	end
 end
 
@@ -114,9 +121,13 @@ def eval(env, exp)
 		if method.is_a? Method or method.is_a? Lamb
 			return method.call(env, exp.cdr)
 		else
-			p "todo"
+			p "todo:", method, exp.car
 			return nil
 		end
+	elsif exp.is_a? String
+		return exp
+	elsif exp == true or exp == false
+		return exp
 	else
 		p "wat" + exp.to_s
 	end
@@ -137,14 +148,7 @@ def lamb_args_iter(env, node, node2)
 	end
 end
 
-
-def define(env, arg)
-	name = arg.car.name
-	val = eval(env, arg.cdr.car)
-	env[name] = val
-end
-
-input = gets.strip
+input = $stdin.read.strip
 if input.length < 1
 	#input = "(define x 5)(define y 7)(+ x (- y 1))"
 	input =
